@@ -7,13 +7,13 @@
 <style>
 :root{--blue:#2b63ff;--orange:#ff9500;--muted:#667085;--bg:#f6f8fb;--card:#ffffff}
 *{box-sizing:border-box;transition:all 0.2s}
-body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;margin:0;background:var(--bg);color:#0f172a}
+body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;margin:0;background:var(--bg);color:#0f172a;display:flex;flex-direction:column;min-height:100vh}
 header{background:linear-gradient(90deg,var(--blue),#3b82f6);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
 header h1{margin:0;font-size:18px}
 nav{display:flex;gap:10px}
 nav button{background:transparent;border:none;color:rgba(255,255,255,0.95);padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
 nav button:hover{background:rgba(255,255,255,0.12)}
-.container{max-width:1100px;margin:22px auto;padding:0 18px}
+.container{max-width:1100px;margin:22px auto;padding:0 18px;flex:1}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(12,16,29,0.06);transition:all 0.3s}
 .card:hover{transform:translateY(-4px);box-shadow:0 10px 22px rgba(12,16,29,0.12)}
@@ -32,7 +32,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);outline:none;bo
 label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
 .row{display:flex;gap:10px}
 .row .col{flex:1}
-footer{max-width:1100px;margin:18px auto;padding:8px 18px;color:var(--muted);font-size:13px}
+footer{max-width:1100px;margin:0 auto;padding:12px 18px;color:var(--muted);font-size:13px;text-align:center;background:#fff;box-shadow:0 -2px 6px rgba(0,0,0,0.05);flex-shrink:0}
 @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.large{grid-column:span 2}}
 @media (max-width:640px){.grid{grid-template-columns:1fr}.large{grid-column:span 1}}
 .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:center;justify-content:center;z-index:40}
@@ -57,7 +57,18 @@ footer{max-width:1100px;margin:18px auto;padding:8px 18px;color:var(--muted);fon
 </nav>
 </header>
 <main class="container">
-<!-- Home, Groups, Students, Announcements sections same as previous code -->
+<section id="homeView" class="grid">
+<!-- Home content goes here -->
+</section>
+<section id="groupsView" class="grid" style="display:none">
+<!-- Groups content goes here -->
+</section>
+<section id="studentsView" class="grid" style="display:none">
+<!-- Students content goes here -->
+</section>
+<section id="annView" class="grid" style="display:none">
+<!-- Announcements content goes here -->
+</section>
 </main>
 <footer>Made with ♥ — Save as index.html and open in browser.</footer>
 <template id="loginTpl">
@@ -87,14 +98,13 @@ let adminLoggedIn=false;
 function saveState(){localStorage.setItem('edu_state',JSON.stringify(state));updateCounters();}
 function loadState(){let v=localStorage.getItem('edu_state');if(v) state=JSON.parse(v); updateUI();}
 function updateCounters(){$('countGroups').textContent=state.groups.length;$('countStudents').textContent=state.students.length;}
-function go(view){['homeView','groupsView','studentsView','annView'].forEach(id=>$(id).style.display='none');if(view==='home') $('homeView').style.display='grid'; if(view==='groups') $('groupsView').style.display='grid'; if(view==='students') $('studentsView').style.display='grid'; if(view==='announcements') $('annView').style.display='grid';}
+function go(view){['homeView','groupsView','studentsView','annView'].forEach(id=>$(id).style.display='none');if(view==='home') $('homeView').style.display='grid'; else if(view==='groups') $('groupsView').style.display='grid'; else if(view==='students') $('studentsView').style.display='grid'; else if(view==='announcements') $('annView').style.display='grid';}
 function updateUI(){renderAnns(); renderGroups(); renderStudents(); populateSelects(); updateCounters();}
-function renderAnns(){const c=$('annList');c.innerHTML='';state.anns.slice().reverse().forEach(a=>{const el=document.createElement('div');el.className='announcement';el.innerHTML=`<strong>${a.title}</strong><div class='small'>${a.msg}</div>`;c.appendChild(el);}); const homeAnn=$('annListHome'); homeAnn.innerHTML=''; state.anns.slice().reverse().slice(0,4).forEach(a=>{const d=document.createElement('div');d.className='announcement'; d.innerHTML=`<strong>${a.title}</strong><div class='small'>${a.msg}</div>`; homeAnn.appendChild(d);});}
+function renderAnns(){const c=$('annList');if(c)c.innerHTML='';state.anns.slice().reverse().forEach(a=>{const el=document.createElement('div');el.className='announcement';el.innerHTML=`<strong>${a.title}</strong><div class='small'>${a.msg}</div>`;if(c)c.appendChild(el);}); const homeAnn=$('annListHome');if(homeAnn) homeAnn.innerHTML=''; state.anns.slice().reverse().slice(0,4).forEach(a=>{const d=document.createElement('div');d.className='announcement'; d.innerHTML=`<strong>${a.title}</strong><div class='small'>${a.msg}</div>`;if(homeAnn) homeAnn.appendChild(d);});}
 function createAnnouncement(){if(!adminLoggedIn) return alert('Only teacher can post announcements'); const t=$('annTitle').value.trim(); const m=$('annMsg').value.trim(); if(!t||!m) return alert('Title and message required'); state.anns.push({title:t,msg:m,at:Date.now()}); $('annTitle').value=''; $('annMsg').value=''; saveState(); renderAnns();}
 function openLogin(){const tpl=document.getElementById('loginTpl');const modal=tpl.content.cloneNode(true); document.body.appendChild(modal);}
 function closeModal(){const backs=document.querySelectorAll('.modal-backdrop');if(backs.length) backs[backs.length-1].remove();}
 function tryLogin(){const v=$('pwInput').value; if(v===TEACHER_PASSWORD){closeModal(); adminLoggedIn=true; alert('Teacher logged in');} else alert('Incorrect password');}
-// Functions for students/groups same as before
 loadState(); go('home');
 </script>
 </body>
