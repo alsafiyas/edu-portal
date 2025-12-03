@@ -1,0 +1,313 @@
+<!--
+EDU Portal - Single-file ready-to-save website
+How to use:
+1. Copy all this content and save it as `index.html` on your computer.
+2. Open index.html in your browser (double-click) — the site will work offline.
+3. Default teacher password: Teach123
+4. To change the password, open the file and edit the variable `TEACHER_PASSWORD` in the <script> section.
+
+This site stores data in browser localStorage, so data will persist on the same device and browser.
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EDU Info Portal</title>
+  <style>
+    :root{--blue:#2b63ff;--muted:#667085;--bg:#f6f8fb;--card:#ffffff}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;margin:0;background:var(--bg);color:#0f172a}
+    header{background:linear-gradient(90deg,var(--blue),#3b82f6);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
+    header .brand{display:flex;gap:12px;align-items:center}
+    header h1{margin:0;font-size:18px}
+    nav{display:flex;gap:10px}
+    nav button{background:transparent;border:none;color:rgba(255,255,255,0.95);padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
+    nav button:hover{background:rgba(255,255,255,0.08)}
+    .container{max-width:1100px;margin:22px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(12,16,29,0.06)}
+    .large{grid-column:span 2}
+    h2{margin:0 0 10px 0;font-size:18px}
+    p.muted{color:var(--muted);margin:0 0 12px 0}
+    .btn{display:inline-block;background:var(--blue);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .chip{padding:8px 10px;border-radius:8px;background:#f3f6ff;border:1px solid rgba(43,99,255,0.08)}
+    .small{font-size:13px;color:var(--muted)}
+    .flex{display:flex;gap:10px;align-items:center}
+    input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6edf3;width:100%;font-size:14px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    .row{display:flex;gap:10px}
+    .row .col{flex:1}
+    footer{max-width:1100px;margin:18px auto;padding:8px 18px;color:var(--muted);font-size:13px}
+    /* responsive */
+    @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.large{grid-column:span 2}}
+    @media (max-width:640px){.grid{grid-template-columns:1fr}.large{grid-column:span 1}nav{display:none}header{padding:14px}}
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:center;justify-content:center;z-index:40}
+    .modal{width:100%;max-width:560px;background:var(--card);border-radius:12px;padding:18px}
+    .close{background:transparent;border:none;font-size:18px;cursor:pointer}
+    .small-muted{font-size:12px;color:#9aa3b2}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="white"/><path d="M7 8h10v2H7zM7 12h7v2H7z" fill="url(#g)" opacity="0.9"/></svg>
+      <div>
+        <h1 id="centerName">My Educational Center</h1>
+        <div class="small-muted">Info portal for students & teachers</div>
+      </div>
+    </div>
+    <nav>
+      <button onclick="go('home')">Home</button>
+      <button onclick="go('groups')">Groups</button>
+      <button onclick="go('students')">Students</button>
+      <button onclick="go('announcements')">Announcements</button>
+      <button class="btn" onclick="openLogin()">Teacher Login</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- HOME -->
+    <section id="homeView" class="grid">
+      <div class="card large">
+        <h2 id="homeTitle">Welcome to the Learning Center</h2>
+        <p id="homeDesc" class="muted">We provide high-quality lessons, friendly teachers and clear progress tracking. Check your group and announcements below.</p>
+        <div style="margin-top:12px" id="homeWidgets" class="row">
+          <div class="col card" style="padding:12px">
+            <div class="small">Total groups</div>
+            <div style="font-size:22px;font-weight:700" id="countGroups">0</div>
+          </div>
+          <div class="col card" style="padding:12px">
+            <div class="small">Total students</div>
+            <div style="font-size:22px;font-weight:700" id="countStudents">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Quick Links</h2>
+        <div class="list" style="margin-top:8px">
+          <div class="chip"><strong>Groups</strong> — View your group and timetable</div>
+          <div class="chip"><strong>Students</strong> — Browse student list</div>
+          <div class="chip"><strong>Announcements</strong> — Latest news</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Latest Announcements</h2>
+        <div id="annListHome" style="margin-top:10px" class="list"></div>
+      </div>
+    </section>
+
+    <!-- GROUPS -->
+    <section id="groupsView" class="grid" style="display:none">
+      <div class="card large">
+        <h2>Groups</h2>
+        <div class="small-muted">Click a group to view details</div>
+        <div id="groupsList" style="margin-top:12px" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>Create Group</h2>
+        <label>Name</label><input id="newGroupName" placeholder="Beginner A" />
+        <label style="margin-top:10px">Schedule</label><input id="newGroupSchedule" placeholder="Mon/Wed 17:00-19:00" />
+        <div style="margin-top:10px"><button class="btn" onclick="createGroup()">Add Group</button></div>
+      </div>
+    </section>
+
+    <!-- STUDENTS -->
+    <section id="studentsView" class="grid" style="display:none">
+      <div class="card large">
+        <h2>Students</h2>
+        <div class="small-muted">Filter by group</div>
+        <select id="filterGroup" onchange="renderStudents()"><option value="">All groups</option></select>
+        <div id="studentsList" style="margin-top:12px" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>Add Student</h2>
+        <label>Full name</label><input id="newStudentName" placeholder="Ali Karimov" />
+        <label style="margin-top:8px">Group</label>
+        <select id="newStudentGroup"><option value="">Select group</option></select>
+        <label style="margin-top:8px">Notes</label>
+        <textarea id="newStudentNotes" rows="4" placeholder="Phone, parent contact..."></textarea>
+        <div style="margin-top:10px"><button class="btn" onclick="createStudent()">Add Student</button></div>
+      </div>
+    </section>
+
+    <!-- ANNOUNCEMENTS -->
+    <section id="annView" class="grid" style="display:none">
+      <div class="card large">
+        <h2>Announcements</h2>
+        <div id="annList" class="list" style="margin-top:12px"></div>
+      </div>
+      <div class="card">
+        <h2>New Announcement</h2>
+        <label>Title</label><input id="annTitle" />
+        <label style="margin-top:8px">Message</label><textarea id="annMsg" rows="6"></textarea>
+        <div style="margin-top:10px"><button class="btn" onclick="createAnnouncement()">Post Announcement</button></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>Made with ♥ — Save this file as <strong>index.html</strong> and open in any browser. Teacher password is stored inside the file for offline use.</footer>
+
+  <!-- Login / Admin Modal -->
+  <template id="loginTpl">
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong>Teacher Login</strong>
+          <button class="close" onclick="closeModal()">×</button>
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="pwInput" type="password" placeholder="Enter teacher password" />
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn" onclick="tryLogin()">Login</button>
+            <button onclick="closeModal()" style="background:#f3f4f6;border-radius:8px;padding:8px 12px;border:none;cursor:pointer">Cancel</button>
+          </div>
+          <div class="small-muted" style="margin-top:8px">Password is stored only in this file for simple offline usage.</div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Admin Panel Template -->
+  <template id="adminTpl">
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Teacher Panel</strong>
+          <button class="close" onclick="closeModal()">×</button>
+        </div>
+        <div style="max-height:60vh;overflow:auto">
+          <h3>Home Page</h3>
+          <label>Homepage Title</label>
+          <input id="admHomeTitle" />
+          <label style="margin-top:8px">Homepage Description</label>
+          <textarea id="admHomeDesc" rows="3"></textarea>
+          <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="saveHome()">Save</button></div>
+
+          <hr style="margin:12px 0" />
+
+          <h3>Manage Groups</h3>
+          <div id="admGroups"></div>
+
+          <hr style="margin:12px 0" />
+
+          <h3>Manage Students</h3>
+          <div id="admStudents"></div>
+
+          <hr style="margin:12px 0" />
+
+          <h3>Manage Announcements</h3>
+          <div id="admAnns"></div>
+
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // === CONFIG ===
+    const TEACHER_PASSWORD = 'Teach123'; // change this before saving if you want a different password
+
+    // === Utilities & state ===
+    const $ = id => document.getElementById(id);
+    let state = {groups:[],students:[],anns:[],home:{title:'Welcome to the Learning Center',desc:'We provide high-quality lessons.'}};
+
+    function saveState(){localStorage.setItem('edu_state', JSON.stringify(state));updateCounters();}
+    function loadState(){let v=localStorage.getItem('edu_state'); if(v) state=JSON.parse(v); updateUI();}
+
+    function updateCounters(){ $('countGroups').textContent = state.groups.length; $('countStudents').textContent = state.students.length; }
+
+    // === Navigation ===
+    function go(view){['homeView','groupsView','studentsView','annView'].forEach(id=> $(id).style.display='none');
+      if(view==='home') $( 'homeView').style.display='grid';
+      if(view==='groups') $( 'groupsView').style.display='grid';
+      if(view==='students') $( 'studentsView').style.display='grid';
+      if(view==='announcements') $( 'annView').style.display='grid';
+    }
+
+    // === Render ===
+    function updateUI(){
+      // home
+      $('homeTitle').textContent = state.home.title || '';
+      $('homeDesc').textContent = state.home.desc || '';
+      // ann
+      renderAnns(); renderGroups(); renderStudents(); populateSelects(); updateCounters();
+    }
+
+    // === Groups ===
+    function renderGroups(){ const container=$('groupsList'); container.innerHTML='';
+      state.groups.forEach((g,idx)=>{
+        const el = document.createElement('div'); el.className='chip'; el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${g.name}</strong><div class="small">${g.schedule||''}</div></div><div style="display:flex;gap:8px"><button onclick="viewGroup(${idx})">Open</button><button onclick="admEditGroup(${idx})">Edit</button><button onclick="admRemoveGroup(${idx})" style="background:#fee2e2;border:none;padding:6px;border-radius:6px">Delete</button></div></div>`;
+        container.appendChild(el);
+      });
+      // home announcements list
+      const homeAnn = $('annListHome'); homeAnn.innerHTML=''; state.anns.slice().reverse().slice(0,4).forEach(a=>{const d=document.createElement('div');d.className='chip';d.innerHTML=`<strong>${a.title}</strong><div class='small muted'>${a.msg}</div>`;homeAnn.appendChild(d)});
+    }
+
+    function createGroup(){ const name=$('newGroupName').value.trim(); const sched=$('newGroupSchedule').value.trim(); if(!name) return alert('Group name required'); state.groups.push({name, schedule:sched, students:[]}); saveState(); $('newGroupName').value=''; $('newGroupSchedule').value=''; renderGroups(); populateSelects(); }
+
+    function viewGroup(i){ const g=state.groups[i]; alert(`Group: ${g.name}\nSchedule: ${g.schedule}\nStudents: ${g.students.length}`); }
+
+    // === Students ===
+    function renderStudents(){ const container=$('studentsList'); container.innerHTML=''; const filter=$('filterGroup').value; let list = state.students.slice(); if(filter){ list = list.filter(s=>s.group===filter); }
+      list.forEach((s,idx)=>{
+        const el=document.createElement('div'); el.className='chip'; el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${s.name}</strong><div class='small'>Group: ${s.group||'-'} · ${s.notes||''}</div></div><div style='display:flex;gap:8px'><button onclick="admEditStudent(${idx})">Edit</button><button onclick="admRemoveStudent(${idx})" style='background:#fee2e2;border:none;padding:6px;border-radius:6px'>Delete</button></div></div>`; container.appendChild(el);
+      });
+    }
+
+    function createStudent(){ const name=$('newStudentName').value.trim(); const group=$('newStudentGroup').value; const notes=$('newStudentNotes').value.trim(); if(!name) return alert('Student name required'); state.students.push({name,group,notes}); // also add to group's list
+      const gIndex = state.groups.findIndex(x=>x.name===group);
+      if(gIndex>=0) state.groups[gIndex].students.push(name);
+      $('newStudentName').value=''; $('newStudentNotes').value=''; $('newStudentGroup').value=''; saveState(); renderStudents(); }
+
+    // === Announcements ===
+    function renderAnns(){ const c=$('annList'); c.innerHTML=''; state.anns.slice().reverse().forEach((a,idx)=>{const el=document.createElement('div');el.className='chip';el.innerHTML=`<div style="display:flex;justify-content:space-between"><div><strong>${a.title}</strong><div class='small'>${a.msg}</div></div><div><button onclick="admRemoveAnn(${state.anns.length-1-idx})">Delete</button></div></div>`; c.appendChild(el); }) }
+    function createAnnouncement(){ const t=$('annTitle').value.trim(); const m=$('annMsg').value.trim(); if(!t||!m) return alert('Title and message required'); state.anns.push({title:t,msg:m,at:Date.now()}); $('annTitle').value=''; $('annMsg').value=''; saveState(); renderAnns(); }
+
+    // === Admin (Login + Panel) ===
+    let modalEl=null;
+    function openLogin(){ const tpl = document.getElementById('loginTpl'); modalEl = tpl.content.cloneNode(true); document.body.appendChild(modalEl);
+      // attach tryLogin to global scope used by inline onclick
+    }
+    function closeModal(){ // remove last modal-backdrop
+      const backs = document.querySelectorAll('.modal-backdrop'); if(backs.length) backs[backs.length-1].remove(); }
+    function tryLogin(){ const v=$('pwInput').value; if(v===TEACHER_PASSWORD){ closeModal(); openAdmin(); } else alert('Incorrect password'); }
+
+    function openAdmin(){ const tpl = document.getElementById('adminTpl'); modalEl = tpl.content.cloneNode(true); document.body.appendChild(modalEl); // populate admin fields
+      $('admHomeTitle').value = state.home.title; $('admHomeDesc').value = state.home.desc; renderAdminLists(); }
+
+    function saveHome(){ state.home.title = $('admHomeTitle').value; state.home.desc = $('admHomeDesc').value; saveState(); updateUI(); closeModal(); }
+
+    // Admin lists and actions
+    function renderAdminLists(){ const gd = $('admGroups'); gd.innerHTML=''; state.groups.forEach((g,i)=>{ const d=document.createElement('div'); d.className='chip'; d.innerHTML=`<div style='display:flex;justify-content:space-between;align-items:center'><div><strong>${g.name}</strong><div class='small'>${g.schedule||''}</div></div><div style='display:flex;gap:8px'><button onclick="admEditGroup(${i})">Edit</button><button onclick="admRemoveGroup(${i})">Delete</button></div></div>`; gd.appendChild(d); })
+      const sd=$('admStudents'); sd.innerHTML=''; state.students.forEach((s,i)=>{ const d=document.createElement('div'); d.className='chip'; d.innerHTML=`<div style='display:flex;justify-content:space-between'><div><strong>${s.name}</strong><div class='small'>${s.group||''} · ${s.notes||''}</div></div><div style='display:flex;gap:8px'><button onclick="admEditStudent(${i})">Edit</button><button onclick="admRemoveStudent(${i})">Delete</button></div></div>`; sd.appendChild(d); })
+      const ad=$('admAnns'); ad.innerHTML=''; state.anns.forEach((a,i)=>{ const d=document.createElement('div'); d.className='chip'; d.innerHTML=`<div style='display:flex;justify-content:space-between'><div><strong>${a.title}</strong><div class='small'>${a.msg}</div></div><div><button onclick="admRemoveAnn(${i})">Delete</button></div></div>`; ad.appendChild(d); }) }
+
+    // Admin edit/remove functions
+    function admEditGroup(i){ const name=prompt('Group name', state.groups[i].name); if(name!==null){ state.groups[i].name = name; const sched=prompt('Schedule', state.groups[i].schedule||''); if(sched!==null) state.groups[i].schedule=sched; saveState(); renderGroups(); renderAdminLists(); populateSelects(); } }
+    function admRemoveGroup(i){ if(!confirm('Delete this group?')) return; // remove students group link
+      const gname = state.groups[i].name; state.groups.splice(i,1); state.students.forEach(s=>{ if(s.group===gname) s.group=''; }); saveState(); renderGroups(); renderStudents(); renderAdminLists(); populateSelects(); }
+
+    function admEditStudent(i){ const s=state.students[i]; const name=prompt('Student name', s.name); if(name!==null) s.name=name; const group=prompt('Group (enter group name or leave blank)', s.group||''); if(group!==null) s.group=group; const notes=prompt('Notes', s.notes||''); if(notes!==null) s.notes=notes; saveState(); renderStudents(); renderAdminLists(); }
+    function admRemoveStudent(i){ if(!confirm('Delete this student?')) return; state.students.splice(i,1); saveState(); renderStudents(); renderAdminLists(); updateCounters(); }
+
+    function admRemoveAnn(i){ if(!confirm('Delete announcement?')) return; state.anns.splice(i,1); saveState(); renderAnns(); renderAdminLists(); }
+
+    // === Helpers ===
+    function populateSelects(){ const f=$('filterGroup'); const ns=$('newStudentGroup'); f.innerHTML='<option value="">All groups</option>'; ns.innerHTML='<option value="">Select group</option>'; state.groups.forEach(g=>{ const o=document.createElement('option'); o.value=g.name; o.textContent=g.name; f.appendChild(o); const o2=o.cloneNode(true); ns.appendChild(o2); }); }
+
+    // bootstrap
+    loadState(); go('home');
+
+    // expose some functions used in inline onclicks (because modal clones create new nodes)
+    window.createGroup=createGroup; window.createStudent=createStudent; window.createAnnouncement=createAnnouncement; window.go=go; window.openLogin=openLogin; window.closeModal=closeModal; window.tryLogin=tryLogin; window.openAdmin=openAdmin; window.updateUI=updateUI; window.admEditGroup=admEditGroup; window.admRemoveGroup=admRemoveGroup; window.admEditStudent=admEditStudent; window.admRemoveStudent=admRemoveStudent; window.admRemoveAnn=admRemoveAnn; window.saveHome=saveHome; window.viewGroup=viewGroup;
+  </script>
+</body>
+</html>
